@@ -9,19 +9,33 @@ public class ReelController : MonoBehaviour
     public float spinSpeed = 20f;
     public int visibleRows = 3;
 
-    private bool isSpinning = false;
-    private int currentStartIndex = 0;
-
-   
+    [Header("UI")]
     public Image[] visibleSymbolImages;
     public Sprite[] symbolSprites;
 
-    public Color normalColor = Color.white;
+    [Header("FX")]
+    public Color highlightColor = Color.yellow;
+
+    private bool isSpinning = false;
+    private int currentStartIndex = 0;
+    private Color[] originalColors;
+
+    void Awake()
+    {
+        originalColors = new Color[visibleSymbolImages.Length];
+        for (int i = 0; i < visibleSymbolImages.Length; i++)
+        {
+            if (visibleSymbolImages[i] != null)
+                originalColors[i] = visibleSymbolImages[i].color;
+            else
+                originalColors[i] = Color.white;
+        }
+    }
 
     public void StartSpin()
     {
+        if (isSpinning) return;
         isSpinning = true;
-
         StartCoroutine(SpinRoutine());
     }
 
@@ -35,30 +49,45 @@ public class ReelController : MonoBehaviour
 
     private IEnumerator SpinRoutine()
     {
+        if (reelSequence == null || reelSequence.Length == 0)
+        {
+            yield break;
+        }
+
+        float stepDelay = 1f / spinSpeed;
+
         while (isSpinning)
         {
             currentStartIndex = (currentStartIndex + 1) % reelSequence.Length;
             UpdateVisibleSymbols();
-            yield return new WaitForSeconds(1f / spinSpeed); 
+            yield return new WaitForSeconds(stepDelay);
         }
     }
 
     private void UpdateVisibleSymbols()
     {
-        for (int row = 0; row < visibleRows; row++)
+        if (reelSequence == null || reelSequence.Length == 0) return;
+
+        int rowsToUpdate = Mathf.Min(visibleRows, visibleSymbolImages.Length);
+
+        for (int row = 0; row < rowsToUpdate; row++)
         {
             int index = (currentStartIndex + row) % reelSequence.Length;
             Symbol s = reelSequence[index];
 
-            if (row < visibleSymbolImages.Length)
+            Image img = visibleSymbolImages[row];
+            if (img != null && symbolSprites != null && (int)s < symbolSprites.Length)
             {
-                visibleSymbolImages[row].sprite = symbolSprites[(int)s];
+                img.sprite = symbolSprites[(int)s];
             }
         }
     }
 
     public Symbol GetSymbolAtRow(int row)
     {
+        if (reelSequence == null || reelSequence.Length == 0)
+            return Symbol.Bell;
+
         int index = (currentStartIndex + row) % reelSequence.Length;
         return reelSequence[index];
     }
@@ -69,22 +98,23 @@ public class ReelController : MonoBehaviour
         StartCoroutine(HighlightRoutine(row, duration, flashes));
     }
 
-    IEnumerator HighlightRoutine(int row, float duration, int flashes)
+    private IEnumerator HighlightRoutine(int row, float duration, int flashes)
     {
         Image img = visibleSymbolImages[row];
         if (img == null) yield break;
 
-        normalColor = img.color;
+        Color baseColor = originalColors[row];
+        float halfDuration = duration * 0.5f;
 
         for (int i = 0; i < flashes; i++)
         {
-            img.color = Color.yellow;
-            yield return new WaitForSeconds(duration * 0.5f);
-            img.color = normalColor;
-            yield return new WaitForSeconds(duration * 0.5f);
+            img.color = highlightColor;
+            yield return new WaitForSeconds(halfDuration);
+            img.color = baseColor;
+            yield return new WaitForSeconds(halfDuration);
         }
 
-        img.color = normalColor;
+        img.color = baseColor;
     }
 
     public void ResetAllHighlights()
@@ -92,7 +122,7 @@ public class ReelController : MonoBehaviour
         for (int i = 0; i < visibleSymbolImages.Length; i++)
         {
             if (visibleSymbolImages[i] != null)
-                visibleSymbolImages[i].color = normalColor;
+                visibleSymbolImages[i].color = originalColors[i];
         }
     }
 }

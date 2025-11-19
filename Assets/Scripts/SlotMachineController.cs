@@ -1,15 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
 [System.Serializable]
-public class WinInfo
+public struct WinInfo
 {
     public int patternIndex;
     public Symbol symbol;
     public int count;
     public int reward;
+
+    public WinInfo(int patternIndex, Symbol symbol, int count, int reward)
+    {
+        this.patternIndex = patternIndex;
+        this.symbol = symbol;
+        this.count = count;
+        this.reward = reward;
+    }
 }
 
 public class SlotMachineController : MonoBehaviour
@@ -34,15 +43,20 @@ public class SlotMachineController : MonoBehaviour
     public Text logText;
     public bool enableExtraPatterns = true;
 
-    List<WinInfo> lastWins = new List<WinInfo>();
-
-
+    private readonly List<WinInfo> lastWins = new List<WinInfo>();
     private bool isSpinning = false;
 
     void Start()
     {
         UpdateUI();
-        spinButton.onClick.AddListener(OnSpinButton);
+        if (spinButton != null)
+            spinButton.onClick.AddListener(OnSpinButton);
+    }
+
+    void OnDestroy()
+    {
+        if (spinButton != null)
+            spinButton.onClick.RemoveListener(OnSpinButton);
     }
 
     void OnSpinButton()
@@ -50,7 +64,7 @@ public class SlotMachineController : MonoBehaviour
         if (isSpinning) return;
         if (credits < betPerSpin)
         {
-            Debug.Log("No hay creditos suficientes");
+            Debug.Log("No hay créditos suficientes");
             return;
         }
 
@@ -61,6 +75,9 @@ public class SlotMachineController : MonoBehaviour
 
     private IEnumerator SpinRoutine()
     {
+        if (reels == null || reels.Length == 0)
+            yield break;
+
         isSpinning = true;
         lastWinText.text = "";
 
@@ -84,7 +101,7 @@ public class SlotMachineController : MonoBehaviour
         ShowWinLog();
         PlayHighlightFX();
 
-        lastWinText.text = "Ganaste: " + totalWin + " creditos";
+        lastWinText.text = $"Ganaste: {totalWin} créditos";
 
         UpdateUI();
         isSpinning = false;
@@ -92,13 +109,17 @@ public class SlotMachineController : MonoBehaviour
 
     private void UpdateUI()
     {
-        creditsText.text = "Creditos: " + credits;
+        if (creditsText != null)
+            creditsText.text = $"Créditos: {credits}";
     }
 
     private int EvaluatePatterns()
     {
-        int totalWin = 0;
         lastWins.Clear();
+        if (linePatterns == null || linePatterns.Length == 0) return 0;
+        if (reels == null || reels.Length == 0) return 0;
+
+        int totalWin = 0;
 
         for (int p = 0; p < linePatterns.Length; p++)
         {
@@ -106,89 +127,97 @@ public class SlotMachineController : MonoBehaviour
                 continue;
 
             var pattern = linePatterns[p];
-            if (pattern == null || pattern.rowByReel == null || pattern.rowByReel.Length == 0)
-                continue;
+            if (pattern == null || pattern.rowByReel == null) continue;
+            if (pattern.rowByReel.Length != reels.Length) continue;
 
-            Symbol[] lineSymbols = new Symbol[reels.Length];
-
-            for (int reelIndex = 0; reelIndex < reels.Length; reelIndex++)
+            WinInfo? maybeWin = EvaluateSinglePattern(p, pattern);
+            if (maybeWin.HasValue)
             {
-                int row = pattern.rowByReel[reelIndex];
-                lineSymbols[reelIndex] = reels[reelIndex].GetSymbolAtRow(row);
-            }
-
-            Symbol firstSymbol = lineSymbols[0];
-            int count = 1;
-
-            for (int i = 1; i < lineSymbols.Length; i++)
-            {
-                if (lineSymbols[i] == firstSymbol)
-                    count++;
-                else
-                    break;
-            }
-
-            int bestReward = 0;
-
-            foreach (var entry in paytableEntries)
-            {
-                if (entry.symbol == firstSymbol && count >= entry.minCount)
-                {
-                    if (entry.rewardCredits > bestReward)
-                        bestReward = entry.rewardCredits;
-                }
-            }
-
-            if (bestReward > 0)
-            {
-                totalWin += bestReward;
-
-                WinInfo info = new WinInfo
-                {
-                    patternIndex = p,
-                    symbol = firstSymbol,
-                    count = count,
-                    reward = bestReward
-                };
-                lastWins.Add(info);
+                WinInfo win = maybeWin.Value;
+                totalWin += win.reward;
+                lastWins.Add(win);
             }
         }
 
         return totalWin;
     }
 
-    void ShowWinLog()
+    private WinInfo? EvaluateSinglePattern(int patternIndex, LinePattern pattern)
+    {
+        int reelCount = reels.Length;
+        Symbol[] lineSymbols = new Symbol[reelCount];
+
+        for (int reelIndex = 0; reelIndex < reelCount; reelIndex++)
+        {
+            int row = pattern.rowByReel[reelIndex];
+            lineSymbols[reelIndex] = reels[reelIndex].GetSymbolAtRow(row);
+        }
+
+        Symbol firstSymbol = lineSymbols[0];
+        int count = 1;
+
+        for (int i = 1; i < lineSymbols.Length; i++)
+        {
+            if (lineSymbols[i] == firstSymbol)
+                count++;
+            else
+                break;
+        }
+
+        int bestReward = 0;
+
+        for (int i = 0; i < paytableEntries.Length; i++)
+        {
+            var entry = paytableEntries[i];
+            if (entry.symbol == firstSymbol && count >= entry.minCount)
+            {
+                if (entry.rewardCredits > bestReward)
+                    bestReward = entry.rewardCredits;
+            }
+        }
+
+        if (bestReward <= 0)
+            return null;
+
+        return new WinInfo(patternIndex, firstSymbol, count, bestReward);
+    }
+
+    private void ShowWinLog()
     {
         if (logText == null) return;
 
         if (lastWins.Count == 0)
         {
-            logText.text = "Sin lineas ganadoras.";
+            logText.text = "Sin líneas ganadoras.";
             return;
         }
 
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        sb.AppendLine("Lineas ganadoras:");
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("Líneas ganadoras:");
 
-        foreach (var win in lastWins)
+        for (int i = 0; i < lastWins.Count; i++)
         {
+            var win = lastWins[i];
             sb.AppendLine(
-                $"Linea {win.patternIndex}: {win.symbol} x{win.count} -> {win.reward} creditos"
+                $"Línea {win.patternIndex}: {win.symbol} x{win.count} -> {win.reward} créditos"
             );
         }
 
         logText.text = sb.ToString();
     }
 
-    void PlayHighlightFX()
+    private void PlayHighlightFX()
     {
+        if (reels == null) return;
+
         foreach (var reel in reels)
         {
             reel.ResetAllHighlights();
         }
 
-        foreach (var win in lastWins)
+        for (int i = 0; i < lastWins.Count; i++)
         {
+            var win = lastWins[i];
             LinePattern pattern = linePatterns[win.patternIndex];
 
             for (int reelIndex = 0; reelIndex < win.count; reelIndex++)

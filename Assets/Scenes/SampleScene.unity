@@ -740,7 +740,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 988236b9076094f7bbe7619eb78c6483, type: 3}
   - {fileID: 21300000, guid: bbfa9601fef344da886e5bb31a54ac0d, type: 3}
   - {fileID: 21300000, guid: 233763b3d6cef4801b6e11148667703c, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 0.015686275, g: 0.88235295, b: 1, a: 1}
 --- !u!1 &465952264
 GameObject:
   m_ObjectHideFlags: 0
@@ -1161,7 +1161,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 988236b9076094f7bbe7619eb78c6483, type: 3}
   - {fileID: 21300000, guid: bbfa9601fef344da886e5bb31a54ac0d, type: 3}
   - {fileID: 21300000, guid: 233763b3d6cef4801b6e11148667703c, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 0.015686275, g: 0.88235295, b: 1, a: 1}
 --- !u!1 &595924699
 GameObject:
   m_ObjectHideFlags: 0
@@ -1521,7 +1521,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 988236b9076094f7bbe7619eb78c6483, type: 3}
   - {fileID: 21300000, guid: bbfa9601fef344da886e5bb31a54ac0d, type: 3}
   - {fileID: 21300000, guid: 233763b3d6cef4801b6e11148667703c, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 0.015686274, g: 0.88127697, b: 1, a: 1}
 --- !u!1 &820956045
 GameObject:
   m_ObjectHideFlags: 0
@@ -2109,7 +2109,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 988236b9076094f7bbe7619eb78c6483, type: 3}
   - {fileID: 21300000, guid: bbfa9601fef344da886e5bb31a54ac0d, type: 3}
   - {fileID: 21300000, guid: 233763b3d6cef4801b6e11148667703c, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 0.015686275, g: 0.88235295, b: 1, a: 1}
 --- !u!1 &1371016582
 GameObject:
   m_ObjectHideFlags: 0
@@ -2971,7 +2971,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 988236b9076094f7bbe7619eb78c6483, type: 3}
   - {fileID: 21300000, guid: bbfa9601fef344da886e5bb31a54ac0d, type: 3}
   - {fileID: 21300000, guid: 233763b3d6cef4801b6e11148667703c, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 0.015686275, g: 0.88235295, b: 1, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
